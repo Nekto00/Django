@@ -20,11 +20,14 @@ class Product(models.Model):
         verbose_name="Фото",
         help_text="Загрузите фото товара",
     )
-    category = models.CharField(
+    category = models.ForeignKey(
+        "Category",
+        on_delete=models.SET_NULL,
         verbose_name="Категория",
         help_text="Введите категорию товара",
-        blank=True,
         null=True,
+        blank=True,
+        related_name="catalog"
     )
     price = models.CharField(
         max_length=100,
