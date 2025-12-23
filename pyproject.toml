@@ -8,6 +8,9 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "psycopg2-binary (>=2.9.11,<3.0.0)",
+    "black (>=25.11.0,<26.0.0)",
+    "ipython (>=9.8.0,<10.0.0)"
 ]
 
 
