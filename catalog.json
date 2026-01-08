@@ -1,0 +1,41 @@
+[
+{
+    "model": "catalog.product",
+    "pk": 7,
+    "fields": {
+        "name": "Мышь",
+        "description": null,
+        "photo": "",
+        "category": 4,
+        "price": "400",
+        "created_at": null,
+        "updated_at": null
+    }
+},
+{
+    "model": "catalog.product",
+    "pk": 8,
+    "fields": {
+        "name": "Компьютер",
+        "description": null,
+        "photo": "",
+        "category": 4,
+        "price": "100000",
+        "created_at": null,
+        "updated_at": null
+    }
+},
+{
+    "model": "catalog.product",
+    "pk": 9,
+    "fields": {
+        "name": "Ноутбук",
+        "description": null,
+        "photo": "",
+        "category": 4,
+        "price": "40000",
+        "created_at": null,
+        "updated_at": null
+    }
+}
+]
