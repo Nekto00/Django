@@ -1,0 +1,32 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}{{ object.title }}{% endblock %}
+
+{% block content %}
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'blog:blogpost_list' %}" class="btn btn-secondary">← Назад к списку</a>
+    </div>
+
+    <article class="blog-post">
+        <h1>{{ object.title }}</h1>
+
+        {% if object.preview %}
+            <img src="{{ object.preview.url }}" alt="{{ object.title }}" style="max-width: 500px; height: auto; margin: 20px 0;">
+        {% endif %}
+
+        <div style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+            <span>Создано: {{ object.created_at|date:"d.m.Y H:i" }}</span> |
+            <span>Просмотры: {{ object.views_count }}</span> |
+            <span>Статус: {% if object.is_published %}Опубликовано{% else %}Черновик{% endif %}</span>
+        </div>
+
+        <div style="line-height: 1.8; margin-bottom: 30px;">
+            {{ object.content|linebreaks }}
+        </div>
+
+        <div>
+            <a href="{% url 'blog:blogpost_update' object.pk %}" class="btn">Редактировать</a>
+            <a href="{% url 'blog:blogpost_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+        </div>
+    </article>
+{% endblock %}

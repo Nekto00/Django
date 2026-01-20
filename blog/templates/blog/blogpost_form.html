@@ -1,0 +1,79 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}
+    {% if object %}Редактирование {{ object.title }}{% else %}Создание записи{% endif %}
+{% endblock %}
+
+{% block content %}
+    <h1>{% if object %}Редактирование записи{% else %}Создание новой записи{% endif %}</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div style="margin-bottom: 15px;">
+            <label for="id_title">Заголовок:</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+                <div style="color: #dc3545; font-size: 0.9em;">{{ form.title.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label for="id_content">Содержимое:</label>
+            {{ form.content }}
+            {% if form.content.errors %}
+                <div style="color: #dc3545; font-size: 0.9em;">{{ form.content.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label for="id_preview">Превью (изображение):</label>
+            {{ form.preview }}
+            {% if form.preview.errors %}
+                <div style="color: #dc3545; font-size: 0.9em;">{{ form.preview.errors }}</div>
+            {% endif %}
+
+            {% if object and object.preview %}
+                <div style="margin-top: 10px;">
+                    <p>Текущее изображение:</p>
+                    <img src="{{ object.preview.url }}" alt="Текущее превью" style="max-width: 200px; height: auto;">
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label for="id_is_published" style="display: flex; align-items: center;">
+                {{ form.is_published }}
+                <span style="margin-left: 5px;">Опубликовано</span>
+            </label>
+            {% if form.is_published.errors %}
+                <div style="color: #dc3545; font-size: 0.9em;">{{ form.is_published.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn">
+                {% if object %}Сохранить изменения{% else %}Создать запись{% endif %}
+            </button>
+            <a href="{% url 'blog:blogpost_list' %}" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+
+    <style>
+        input[type="text"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        input[type="checkbox"] {
+            width: auto;
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Записи блога{% endblock %}
+
+{% block content %}
+    <h1>Записи блога</h1>
+
+    <a href="{% url 'blog:blogpost_create' %}" class="btn">Создать новую запись</a>
+
+    {% if object_list %}
+        {% for post in object_list %}
+            <div class="blog-post">
+                <h2>
+                    <a href="{% url 'blog:blogpost_detail' post.pk %}">{{ post.title }}</a>
+                </h2>
+
+                {% if post.preview %}
+                    <img src="{{ post.preview.url }}" alt="{{ post.title }}" style="max-width: 300px; height: auto; margin: 10px 0;">
+                {% endif %}
+
+                <p>{{ post.content|truncatewords:30 }}</p>
+
+                <div style="font-size: 0.9em; color: #666;">
+                    <span>Создано: {{ post.created_at|date:"d.m.Y H:i" }}</span> |
+                    <span>Просмотры: {{ post.views_count }}</span>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <a href="{% url 'blog:blogpost_detail' post.pk %}" class="btn">Читать</a>
+                    <a href="{% url 'blog:blogpost_update' post.pk %}" class="btn">Редактировать</a>
+                    <a href="{% url 'blog:blogpost_delete' post.pk %}" class="btn btn-danger">Удалить</a>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Пока нет опубликованных записей в блоге.</p>
+    {% endif %}
+{% endblock %}
