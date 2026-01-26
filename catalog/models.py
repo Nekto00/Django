@@ -29,8 +29,9 @@ class Product(models.Model):
         blank=True,
         related_name="catalog"
     )
-    price = models.CharField(
-        max_length=100,
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
         verbose_name="Цена за покупку",
         help_text="Введите цену за покупку",
     )
@@ -45,6 +46,11 @@ class Product(models.Model):
         null=True,
         verbose_name="Дата последнего изменения",
         help_text="Введите дату последнего изменения.",
+    )
+    views_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Количество просмотров",
+        help_text="Счетчик просмотров продукта"
     )
 
     def __str__(self):

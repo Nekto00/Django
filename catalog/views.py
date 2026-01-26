@@ -1,29 +1,70 @@
-from itertools import product
-
 from django.shortcuts import render, get_object_or_404
-from django.views.generic import ListView, DetailView, CreateView, UpdateView,DeleteView, TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
-from catalog.models import Product
+from django.contrib import messages
+from .models import Product
+from .forms import ProductForm
+
 
 class CatalogListView(ListView):
     model = Product
+    template_name = 'catalog/product_list.html'
+    context_object_name = 'products'
+
 
 class CatalogDetailView(DetailView):
     model = Product
+    template_name = 'catalog/product_detail.html'
+    context_object_name = 'product'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        obj.views_count += 1
+        obj.save(update_fields=['views_count'])
+        return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = self.object.name
+        return context
+
 
 class CatalogCreateView(CreateView):
     model = Product
-    fields = ('name','category','price', 'photo','created_at')
-    success_url = reverse_lazy('catalog:base')
+    form_class = ProductForm
+    template_name = 'catalog/product_form.html'
+
+    def get_success_url(self):
+        messages.success(self.request, 'Продукт успешно создан!')
+        return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Пожалуйста, исправьте ошибки в форме.')
+        return super().form_invalid(form)
+
 
 class CatalogUpdateView(UpdateView):
     model = Product
-    fields = ('name', 'category', 'price', 'photo', 'created_at')
-    success_url = reverse_lazy('catalog:base')
+    form_class = ProductForm
+    template_name = 'catalog/product_form.html'
+
+    def get_success_url(self):
+        messages.success(self.request, 'Продукт успешно обновлен!')
+        return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Пожалуйста, исправьте ошибки в форме.')
+        return super().form_invalid(form)
+
 
 class CatalogDeleteView(DeleteView):
     model = Product
     success_url = reverse_lazy('catalog:base')
+    template_name = 'catalog/product_confirm_delete.html'
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Продукт успешно удален!')
+        return super().delete(request, *args, **kwargs)
 
 
 class HomeView(TemplateView):

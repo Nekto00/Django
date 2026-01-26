@@ -1,28 +1,31 @@
 
 <div class="collapse text-bg-dark" id="navbarHeader">
-            <div class="container">
-                <div class="row">
-                    <div class="col-sm-8 col-md-7 py-4">
-                        <h4>Магазин всего что есть</h4>
-                        <p class="text-body-secondary">У нас вы можете найти всё.</p>
-                    </div>
-                    <div class="col-sm-4 offset-md-1 py-4">
-                        <h4>Навигация</h4>
-                        <ul class="list-unstyled">
-                            <li><a href="{% url 'catalog:home' %}" class="text-white">Главная</a></li>
-                            <li><a href="{% url 'catalog:base' %}" class="text-white">Товары</a></li>
-                            <li><a href="{% url 'catalog:contacts' %}" class="text-white">Контакты</a></li>
-                        </ul>
-                    </div>
-                </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-8 col-md-7 py-4">
+                <h4>Магазин всего что есть</h4>
+                <p class="text-body-secondary">У нас вы можете найти всё. А также почитать наш блог!</p>
+            </div>
+            <div class="col-sm-4 offset-md-1 py-4">
+                <h4>Навигация</h4>
+                <ul class="list-unstyled">
+                    <li><a href="{% url 'catalog:home' %}" class="text-white">Главная</a></li>
+                    <li><a href="{% url 'catalog:base' %}" class="text-white">Товары</a></li>
+                    <li><a href="{% url 'blog:blogpost_list' %}" class="text-white">Блог</a></li> <!-- ДОБАВЛЕНО -->
+                    <li><a href="{% url 'catalog:contacts' %}" class="text-white">Контакты</a></li>
+                </ul>
             </div>
         </div>
-        <div class="navbar navbar-dark bg-dark shadow-sm">
-            <div class="container">
-                <a href="#" class="navbar-brand d-flex align-items-center">
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarHeader" aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </div>
-        </div>
+    </div>
+</div>
+<div class="navbar navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a href="{% url 'catalog:home' %}" class="navbar-brand d-flex align-items-center">
+            <strong>Каталог товаров</strong>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarHeader"
+                aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
