@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+
 import os
 from dotenv import load_dotenv
 from pathlib import Path
@@ -20,6 +21,12 @@ load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Для разработки
+
+# От кого отправляются письма
+DEFAULT_FROM_EMAIL = 'noreply@catalog.ru'
+SERVER_EMAIL = 'noreply@catalog.ru'
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-!h$ru#9*0cy@a$fr8gr#vzz3s!vpv*m5ce6%)0e_r#-2@$bc@4'
 
@@ -27,7 +34,7 @@ SECRET_KEY = 'django-insecure-!h$ru#9*0cy@a$fr8gr#vzz3s!vpv*m5ce6%)0e_r#-2@$bc@4
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+AUTH_USER_MODEL = 'users.User'
 
 # Application definition
 
@@ -40,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'catalog',
     'blog',
+    'users',
 ]
 
 MIDDLEWARE = [
