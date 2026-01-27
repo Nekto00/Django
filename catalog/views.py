@@ -2,10 +2,13 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from .models import Product
 from .forms import ProductForm
 
 
+# Общедоступные представления (не требуют авторизации)
 class CatalogListView(ListView):
     model = Product
     template_name = 'catalog/product_list.html'
@@ -23,48 +26,46 @@ class CatalogDetailView(DetailView):
         obj.save(update_fields=['views_count'])
         return obj
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = self.object.name
-        return context
 
-
-class CatalogCreateView(CreateView):
+# ЗАЩИЩЕННЫЕ представления (требуют авторизации)
+class CatalogCreateView(LoginRequiredMixin, CreateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_form.html'
+    login_url = '/users/login/'  # Куда перенаправлять неавторизованных пользователей
 
     def get_success_url(self):
         messages.success(self.request, 'Продукт успешно создан!')
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-    def form_invalid(self, form):
-        messages.error(self.request, 'Пожалуйста, исправьте ошибки в форме.')
-        return super().form_invalid(form)
 
-
-class CatalogUpdateView(UpdateView):
+class CatalogUpdateView(LoginRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_form.html'
+    login_url = '/users/login/'
 
     def get_success_url(self):
         messages.success(self.request, 'Продукт успешно обновлен!')
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
 
-    def form_invalid(self, form):
-        messages.error(self.request, 'Пожалуйста, исправьте ошибки в форме.')
-        return super().form_invalid(form)
 
-
-class CatalogDeleteView(DeleteView):
+class CatalogDeleteView(LoginRequiredMixin, DeleteView):
     model = Product
     success_url = reverse_lazy('catalog:base')
     template_name = 'catalog/product_confirm_delete.html'
+    login_url = '/users/login/'
 
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Продукт успешно удален!')
         return super().delete(request, *args, **kwargs)
+
+
+# Функции тоже защищаем если нужно
+@login_required(login_url='/users/login/')
+def some_protected_view(request):
+    # Только для авторизованных пользователей
+    pass
 
 
 class HomeView(TemplateView):
