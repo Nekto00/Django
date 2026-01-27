@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class Product(models.Model):
@@ -52,6 +53,20 @@ class Product(models.Model):
         verbose_name="Количество просмотров",
         help_text="Счетчик просмотров продукта"
     )
+    is_published = models.BooleanField(
+        default=False,
+        verbose_name="Опубликовано",
+        help_text="Отметьте для публикации продукта"
+    )
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,  # Используем настройку вместо прямого импорта
+        on_delete=models.SET_NULL,
+        verbose_name="Владелец",
+        null=True,
+        blank=True,
+        related_name='products'
+    )
+
 
     def __str__(self):
         return self.name
@@ -60,6 +75,9 @@ class Product(models.Model):
         verbose_name = "Продукт"
         verbose_name_plural = "Продукты"
         ordering = ["name"]
+        permissions = [
+            ('can_unpublish_product', 'Может отменять публикацию продукта'),
+        ]
 
 
 
