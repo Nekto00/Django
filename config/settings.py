@@ -139,3 +139,29 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL= '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# Настройка кеширования
+CACHE_ENABLED = True  # Флаг для включения/выключения кеширования
+
+if CACHE_ENABLED:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://127.0.0.1:6379/1",  # 1 - номер базы Redis
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                # "PASSWORD": "ваш_пароль",  # Если Redis с паролем
+            },
+            "KEY_PREFIX": "catalog",  # Префикс для всех ключей
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        }
+    }
+
+# Время жизни кеша (в секундах)
+CACHE_TTL = 60 * 15  # 15 минут

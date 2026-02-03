@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from catalog.models import Product, Category
+from django.core.cache import cache
+from django.test import override_settings
 
 User = get_user_model()
 
