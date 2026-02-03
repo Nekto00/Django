@@ -6,7 +6,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from .models import Product
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from .services import get_cached_categories
+from .models import Product, Category
 from .forms import ProductForm
 
 
@@ -44,21 +48,32 @@ class OwnerOrModeratorDeleteMixin(UserPassesTestMixin):
         raise PermissionDenied("Доступ запрещен")
 
 
-
-# Общедоступные представления (не требуют авторизации)
-class CatalogListView(ListView):
-    model = Product
-    template_name = 'catalog/product_list.html'
+class CategoryProductsView(ListView):
+    """Представление для отображения продуктов по категории"""
+    template_name = 'catalog/category_products.html'
     context_object_name = 'products'
 
+    @method_decorator(cache_page(60 * 60))  # Кешируем на 1 час
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     def get_queryset(self):
-        queryset = super().get_queryset()
+        category_slug = self.kwargs.get('category_slug')
         user = self.request.user
 
+        # Получаем категорию
+        try:
+            category = Category.objects.get(slug=category_slug)
+        except Category.DoesNotExist:
+            return Product.objects.none()
+
+        # Базовый запрос для категории
+        queryset = Product.objects.filter(category=category).select_related('category', 'owner')
+
+        # ПРИМЕНЯЕМ ТУ ЖЕ ЛОГИКУ ФИЛЬТРАЦИИ, ЧТО И В CatalogListView!
         if user.is_authenticated:
-            # Показываем все продукты владельцу
-            # Или опубликованные + свои неопубликованные
-            if user.has_perm('catalog.can_unpublish_product'):  # Модератор видит все
+            # Модератор видит все
+            if user.has_perm('catalog.can_unpublish_product'):
                 return queryset
 
             # Обычный пользователь видит опубликованные + свои
@@ -69,6 +84,70 @@ class CatalogListView(ListView):
 
         # Анонимные пользователи видят только опубликованные
         return queryset.filter(is_published=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Получаем категорию
+        try:
+            category = Category.objects.get(slug=self.kwargs.get('category_slug'))
+            context['category'] = category
+        except Category.DoesNotExist:
+            context['category'] = None
+
+        # Получаем все категории для меню
+        context['categories'] = get_cached_categories()
+
+        return context
+
+
+# Общедоступные представления (не требуют авторизации)
+class CatalogListView(ListView):
+    model = Product
+    template_name = 'catalog/product_list.html'
+    context_object_name = 'products'
+
+    def get_queryset(self):
+        cache_key = 'product_list'
+        queryset = cache.get(cache_key)
+
+        if queryset is None:
+            # Если нет в кеше, получаем из БД
+            queryset = Product.objects.all().select_related('category', 'owner')
+
+            # Кешируем на 5 минут
+            cache.set(cache_key, queryset, 60 * 5)
+
+        user = self.request.user
+
+        # Фильтруем по правам доступа
+        if user.is_authenticated:
+            if user.has_perm('catalog.can_unpublish_product'):
+                return queryset
+
+            # Обычный пользователь видит опубликованные + свои
+            from django.db.models import Q
+            return queryset.filter(
+                Q(is_published=True) |
+                Q(owner=user)
+            )
+
+        # Анонимные пользователи видят только опубликованные
+        return queryset.filter(is_published=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Кешируем категории
+        categories_cache_key = 'categories_for_list'
+        categories = cache.get(categories_cache_key)
+
+        if categories is None:
+            categories = Category.objects.all()
+            cache.set(categories_cache_key, categories, 60 * 60 * 24)  # 24 часа
+
+        context['categories'] = categories
+        return context
 
 
 class CatalogDetailView(DetailView):
@@ -81,7 +160,6 @@ class CatalogDetailView(DetailView):
         obj.views_count += 1
         obj.save(update_fields=['views_count'])
         return obj
-
 
 # ЗАЩИЩЕННЫЕ представления (требуют авторизации)
 class CatalogCreateView(LoginRequiredMixin, CreateView):

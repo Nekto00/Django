@@ -1,8 +1,10 @@
 {% extends 'catalog/base.html' %}
 {% load my_tags %}
+{% load cache %}
 {% block content %}
 <div class="album py-5 bg-body-tertiary">
     <div class="container">
+        {% cache 900 product_detail product.pk product.updated_at|date:"U" %}
         <!-- Сообщения (например, после редактирования) -->
         {% if messages %}
             {% for message in messages %}
@@ -46,20 +48,6 @@
                                 <div class="display-6 text-primary fw-bold">{{ product.price }} ₽</div>
                                 {% if product.created_at %}
                                     <small class="text-muted">Добавлен: {{ product.created_at|date:"d.m.Y" }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Счетчик просмотров -->
-                        <div class="alert alert-info d-flex align-items-center mb-4">
-                            <i class="bi bi-eye-fill me-2 fs-5"></i>
-                            <div>
-                                <strong>Просмотров:</strong> {{ product.views_count|default:0 }}
-                                {% if product.updated_at %}
-                                    <span class="ms-3">
-                                        <i class="bi bi-clock-history me-1"></i>
-                                        Обновлено: {{ product.updated_at|date:"d.m.Y H:i" }}
-                                    </span>
                                 {% endif %}
                             </div>
                         </div>
@@ -168,7 +156,20 @@
                                 </button>
                             </div>
                         </div>
-                        <!-- КОНЕЦ блока кнопок действий -->
+                        {% endcache %}
+                        <!-- Счетчик просмотров -->
+                        <div class="alert alert-info d-flex align-items-center mb-4">
+                            <i class="bi bi-eye-fill me-2 fs-5"></i>
+                            <div>
+                                <strong>Просмотров:</strong> {{ product.views_count|default:0 }}
+                                {% if product.updated_at %}
+                                    <span class="ms-3">
+                                        <i class="bi bi-clock-history me-1"></i>
+                                        Обновлено: {{ product.updated_at|date:"d.m.Y H:i" }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

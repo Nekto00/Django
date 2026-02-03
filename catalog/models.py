@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils.text import slugify
 
 
 class Product(models.Model):
@@ -68,8 +69,6 @@ class Product(models.Model):
     )
 
 
-    def __str__(self):
-        return self.name
 
     class Meta:
         verbose_name = "Продукт"
@@ -80,6 +79,10 @@ class Product(models.Model):
         ]
 
 
+    def __str__(self):
+        return self.name
+
+
 
 class Category(models.Model):
     name = models.CharField(
@@ -87,12 +90,24 @@ class Category(models.Model):
         verbose_name="Наименование",
         help_text="Введите наименование категории",
     )
+    slug = models.SlugField(
+        max_length=100,
+        unique=True,
+        blank=True,
+        verbose_name="URL-идентификатор",
+        help_text="Автоматически создается из названия"
+    )
     description = models.TextField(
         verbose_name="Описание",
         help_text="Введите описание категории",
         blank=True,
         null=True,
     )
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Категория"
