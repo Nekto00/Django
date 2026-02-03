@@ -1,11 +1,48 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required, permission_required
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from .models import Product
 from .forms import ProductForm
+
+
+class OwnerRequiredMixin(UserPassesTestMixin):
+    """Только владелец может редактировать"""
+
+    def test_func(self):
+        product = self.get_object()
+        return product.owner == self.request.user
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'Только владелец может редактировать продукт!')
+        raise PermissionDenied("Доступ запрещен")
+
+
+class OwnerOrModeratorDeleteMixin(UserPassesTestMixin):
+    """Владелец или модератор может удалять"""
+
+    def test_func(self):
+        product = self.get_object()
+        user = self.request.user
+
+        # Владелец может удалять
+        if product.owner == user:
+            return True
+
+        # Модератор может удалять
+        if user.has_perm('catalog.delete_product'):
+            return True
+
+        return False
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'У вас нет прав для удаления этого продукта!')
+        raise PermissionDenied("Доступ запрещен")
+
 
 
 # Общедоступные представления (не требуют авторизации)
@@ -13,6 +50,25 @@ class CatalogListView(ListView):
     model = Product
     template_name = 'catalog/product_list.html'
     context_object_name = 'products'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if user.is_authenticated:
+            # Показываем все продукты владельцу
+            # Или опубликованные + свои неопубликованные
+            if user.has_perm('catalog.can_unpublish_product'):  # Модератор видит все
+                return queryset
+
+            # Обычный пользователь видит опубликованные + свои
+            return queryset.filter(
+                Q(is_published=True) |
+                Q(owner=user)
+            )
+
+        # Анонимные пользователи видят только опубликованные
+        return queryset.filter(is_published=True)
 
 
 class CatalogDetailView(DetailView):
@@ -32,14 +88,20 @@ class CatalogCreateView(LoginRequiredMixin, CreateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_form.html'
-    login_url = '/users/login/'  # Куда перенаправлять неавторизованных пользователей
+    login_url = '/users/login/'
+
+    def form_valid(self, form):
+        # Автоматически устанавливаем владельца
+        form.instance.owner = self.request.user
+        form.instance.is_published = False  # По умолчанию не опубликовано
+        return super().form_valid(form)
 
     def get_success_url(self):
         messages.success(self.request, 'Продукт успешно создан!')
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
 
 
-class CatalogUpdateView(LoginRequiredMixin, UpdateView):
+class CatalogUpdateView(LoginRequiredMixin, OwnerRequiredMixin, UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'catalog/product_form.html'
@@ -50,7 +112,8 @@ class CatalogUpdateView(LoginRequiredMixin, UpdateView):
         return reverse_lazy('catalog:product_detail', kwargs={'pk': self.object.pk})
 
 
-class CatalogDeleteView(LoginRequiredMixin, DeleteView):
+# CatalogDeleteView - владелец ИЛИ модератор
+class CatalogDeleteView(LoginRequiredMixin, OwnerOrModeratorDeleteMixin, DeleteView):
     model = Product
     success_url = reverse_lazy('catalog:base')
     template_name = 'catalog/product_confirm_delete.html'
@@ -63,9 +126,20 @@ class CatalogDeleteView(LoginRequiredMixin, DeleteView):
 
 # Функции тоже защищаем если нужно
 @login_required(login_url='/users/login/')
-def some_protected_view(request):
-    # Только для авторизованных пользователей
-    pass
+@permission_required('catalog.can_unpublish_product', raise_exception=True)
+def unpublish_product(request, pk):
+    """Отмена публикации продукта (только для модераторов)"""
+    product = get_object_or_404(Product, pk=pk)
+
+    if product.is_published:
+        product.is_published = False
+        product.save()
+        messages.success(request, f'Публикация продукта "{product.name}" отменена!')
+    else:
+        messages.warning(request, 'Продукт уже не опубликован!')
+
+    return redirect('catalog:product_detail', pk=product.pk)
+
 
 
 class HomeView(TemplateView):

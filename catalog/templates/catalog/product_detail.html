@@ -131,7 +131,7 @@
                             </div>
                         </div>
 
-                        <!-- Кнопки действий -->
+                        <!-- Кнопки действий - ТОЛЬКО ЭТОТ БЛОК ОСТАВИТЬ! -->
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                             <div>
                                 <a class="btn btn-outline-secondary" href="{% url 'catalog:base' %}" role="button">
@@ -140,17 +140,35 @@
                             </div>
 
                             <div class="btn-group">
-                                <a class="btn btn-warning" href="{% url 'catalog:product_update' product.pk %}" role="button">
-                                    <i class="bi bi-pencil"></i> Редактировать
-                                </a>
-                                <a class="btn btn-danger" href="{% url 'catalog:product_delete' product.pk %}" role="button">
-                                    <i class="bi bi-trash"></i> Удалить
-                                </a>
+                                <!-- Редактировать может только владелец -->
+                                {% if user.is_authenticated and product.owner and user.id == product.owner.id %}
+                                    <a class="btn btn-warning" href="{% url 'catalog:product_update' product.pk %}" role="button">
+                                        <i class="bi bi-pencil"></i> Редактировать
+                                    </a>
+                                {% endif %}
+
+                                <!-- Удалить может владелец ИЛИ модератор -->
+                                {% if user.is_authenticated %}
+                                    {% if product.owner and user.id == product.owner.id or perms.catalog.delete_product %}
+                                        <a class="btn btn-danger" href="{% url 'catalog:product_delete' product.pk %}" role="button">
+                                            <i class="bi bi-trash"></i> Удалить
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+
+                                <!-- Отменить публикацию может только модератор -->
+                                {% if perms.catalog.can_unpublish_product and product.is_published %}
+                                    <a class="btn btn-secondary" href="{% url 'catalog:product_unpublish' product.pk %}" role="button">
+                                        <i class="bi bi-eye-slash"></i> Снять с публикации
+                                    </a>
+                                {% endif %}
+
                                 <button type="button" class="btn btn-success">
                                     <i class="bi bi-cart-plus"></i> Купить
                                 </button>
                             </div>
                         </div>
+                        <!-- КОНЕЦ блока кнопок действий -->
                     </div>
                 </div>
             </div>

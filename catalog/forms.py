@@ -26,6 +26,7 @@ class ProductForm(forms.ModelForm):
 
     class Meta:
         model = Product
+        exclude = ['owner', 'updated_at', 'views_count', 'is_published']
         fields = ('name', 'category', 'description', 'price', 'photo', 'created_at')
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
